@@ -30,7 +30,7 @@ datos$Fecha <- as.Date(datos$Fecha, format = '%d/%m/%Y')
 
 ```
 
-Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días. Todos ellos se han realizado tomando como punto de inicio el día 13 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
+Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, y la ratio de crecimiento cada 4 días. Todos ellos se han realizado tomando como punto de inicio el día 13 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
 
 ```{r}
 
@@ -50,18 +50,32 @@ media_movil <- function(datos, dias){
   return(datos)
 }
 
+# función para calcular la ratio de crecimiento en n días
+ratio_crec <- function(datos, dias){
+  datos$Valor_aux <- datos$Valor
+  sapply(dias:dim(datos)[1], function(x){
+    datos$Valor[x] <<- datos$Valor_aux[x] / datos$Valor_aux[x - (dias - 1)] 
+  })
+  
+  datos$Valor[which(datos$Valor == Inf)] <- NaN
+  
+  return(datos)
+}
+
 # función para dibujar la evolución diaria
 evolucion <- function(datos, titulo, color){
   ggplot(datos, aes(x = Fecha, y = Valor)) +
-  geom_col(fill = color) +
-  scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(datos$Fecha[17], NA)) +
-  labs(title = titulo, x = '', y = '') +
-  theme_minimal() +
-  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
-        plot.title = element_text(hjust = 0.5))
+    geom_col(fill = color) +
+    geom_text(data = datos[dim(datos)[1],], aes(x = Fecha, y = Valor, label = round(Valor, 2)), size = 2, vjust = -1, hjust=0.5) +
+    geom_hline(yintercept = 1, alpha = 0.7) +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('12-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    labs(title = titulo, x = '', y = '') +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+          plot.title = element_text(hjust = 0.5))
 }
 
-# función para dibujar la evolución diaria y media movil
+# función para dibujar la evolución diaria y media móvil
 evolucion_movil <- function(datos1, datos2, titulo, serie, color){
   ggplot() +
     geom_col(data=datos1, aes(x = Fecha, y = Valor, fill = serie)) +
@@ -176,6 +190,56 @@ u_diarios_a <- datos[which(datos$Medida == 'Total UCI'),]
 evolucion_movil(u_diarios_a, media_movil(u_diarios_a, 3), 'Ingresos en UCI (acumulado)', 'Ingresos en UCI', '#F98400')
 
 ```
+
+
+### Ratios de crecimiento
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+d_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Confirmados'),], 4)
+
+evolucion(d_diarios_r, 'Casos confirmados (ratio de crecimiento)', '#5BBCD6')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+f_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Fallecimientos'),], 4)
+
+evolucion(f_diarios_r, 'Fallecidos (ratio de crecimiento)', '#FF0000')
+
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+c_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Curados'),], 4)
+
+evolucion(c_diarios_r, 'Curados (ratio de crecimiento)', '#00A08A')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+h_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Hospitalizados'),], 4)
+
+evolucion(h_diarios_r, 'Hospitalizados (ratio de crecimiento)', '#F2AD00')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+u_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Total UCI'),], 4)
+
+evolucion(u_diarios_r, 'Ingresos en UCI (ratio de crecimiento)', '#F98400')
+
+```
+
 
 ## Agradecimientos
 
