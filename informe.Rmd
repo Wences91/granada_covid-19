@@ -79,7 +79,7 @@ evolucion <- function(datos, titulo, color){
 evolucion_movil <- function(datos1, datos2, titulo, serie, color){
   ggplot() +
     geom_col(data=datos1, aes(x = Fecha, y = Valor, fill = serie)) +
-    geom_line(data=datos2, aes(x = Fecha, y = Valor, color = 'Media movil'), alpha = 0.7, size = 1.2) +
+    geom_line(data=datos2, aes(x = Fecha, y = Valor, color = 'Media móvil'), alpha = 0.7, size = 1.2) +
     scale_fill_manual('', values = color) +
     scale_color_manual('', values = 'black') +
     scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('12-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
