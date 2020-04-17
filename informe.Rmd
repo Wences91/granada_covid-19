@@ -1,0 +1,182 @@
+---
+title: "Informe de evolución del COVID-19 en la provincia de Granada"
+author: "Wenceslao Arroyo Machado"
+date: "Actualizado el 17 de abril de 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(ggplot2)
+
+```
+
+
+
+## Introducción
+
+El objetivo de esta notebook es visualizar los datos disponibles de la incidencia del COVID-19 en la provincia de Granada. Cabe destacar que por este motivo no se pretende realizar un análisis de los mismos sino ofrecer gráficos complementarios a los disponibles en el informe diario oficial a modo de fotografía de la situación actual.
+
+
+## Metodología
+
+Los materiales empleados proceden de la [Junta de Andalucía](https://www.juntadeandalucia.es/organismos/saludyfamilias/areas/salud-vida/paginas/Nuevo_Coronavirus.html), los cuales son actualizados a diario. A excepción de los casos nuevos, el resto de variables (fallecimientos, curados, hospitalizados e ingresos en UCI) aparecen recogidos como valores acumulados, por lo que estos casos han requerido ser disgregados. No obstante, en los valores obtenidos de curados y hospitalizados diarios exite un día que dicha diferencia de acumulados da como resultado un valor negativo.
+
+```{r}
+
+datos <- read.csv2('datos.csv', stringsAsFactors = FALSE)
+datos$Fecha <- as.Date(datos$Fecha, format = '%d/%m/%Y')
+
+```
+
+Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días. Todos ellos se han realizado tomando como punto de inicio el día 13 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
+
+```{r}
+
+# función de disgregación
+diario <- function(datos, columna){
+  aux <- datos[which(datos$Medida == columna),]
+  aux <- aux[order(aux$Fecha, decreasing = FALSE),]
+  aux$Valor[-1] <- aux$Valor[-1] - aux$Valor[-dim(aux)[1]]
+  
+  return(aux)
+}
+
+# función para calcular la media movil de n días
+media_movil <- function(datos, dias){
+  datos$Valor <- filter(datos$Valor, rep(1/dias, dias), sides=2)
+  
+  return(datos)
+}
+
+# función para dibujar la evolución diaria
+evolucion <- function(datos, titulo, color){
+  ggplot(datos, aes(x = Fecha, y = Valor)) +
+  geom_col(fill = color) +
+  scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(datos$Fecha[17], NA)) +
+  labs(title = titulo, x = '', y = '') +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+        plot.title = element_text(hjust = 0.5))
+}
+
+# función para dibujar la evolución diaria y media movil
+evolucion_movil <- function(datos1, datos2, titulo, serie, color){
+  ggplot() +
+    geom_col(data=datos1, aes(x = Fecha, y = Valor, fill = serie)) +
+    geom_line(data=datos2, aes(x = Fecha, y = Valor, color = 'Media movil'), alpha = 0.7, size = 1.2) +
+    scale_fill_manual('', values = color) +
+    scale_color_manual('', values = 'black') +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('12-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    labs(title = titulo, x = '', y = '') +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          legend.position = 'bottom')
+}
+
+```
+
+
+## Visualización
+
+### Evolución diaria
+
+```{r, out.width = '100%', warning = FALSE}
+
+d_diarios <- datos[which(datos$Medida == 'Nuevos casos'),]
+
+evolucion_movil(d_diarios, media_movil(d_diarios, 3), 'Casos (diario)', 'Nuevos casos', '#5BBCD6')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+f_diarios <- diario(datos, 'Fallecimientos')
+
+evolucion_movil(f_diarios, media_movil(f_diarios, 3), 'Fallecidos (diario)', 'Fallecimientos', '#FF0000')
+
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+c_diarios <- diario(datos, 'Curados')
+
+evolucion_movil(c_diarios, media_movil(c_diarios, 3), 'Curados (diario)', 'Curados', '#00A08A')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+h_diarios <- diario(datos, 'Hospitalizados')
+
+evolucion_movil(h_diarios, media_movil(h_diarios, 3), 'Hospitalizados (diario)', 'Hospitalizados', '#F2AD00')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+u_diarios <- diario(datos, 'Total UCI')
+
+evolucion_movil(u_diarios, media_movil(u_diarios, 3), 'Ingresos en UCI (diario)', 'Ingresos en UCI', '#F98400')
+
+```
+
+
+### Evolución acumulada
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+d_diarios_a <- datos[which(datos$Medida == 'Confirmados'),]
+
+evolucion_movil(d_diarios_a, media_movil(d_diarios_a, 3), 'Casos confirmados (acumulado)', 'Nuevos casos', '#5BBCD6')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+f_diarios_a <- datos[which(datos$Medida == 'Fallecimientos'),]
+
+evolucion_movil(f_diarios_a, media_movil(f_diarios_a, 3), 'Fallecidos (acumulado)', 'Fallecimientos', '#FF0000')
+
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+c_diarios_a <- datos[which(datos$Medida == 'Curados'),]
+
+evolucion_movil(c_diarios_a, media_movil(c_diarios_a, 3), 'Curados (acumulado)', 'Curados', '#00A08A')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+h_diarios_a <- datos[which(datos$Medida == 'Hospitalizados'),]
+
+evolucion_movil(h_diarios_a, media_movil(h_diarios_a, 3), 'Hospitalizados (acumulado)', 'Hospitalizados', '#F2AD00')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+u_diarios_a <- datos[which(datos$Medida == 'Total UCI'),]
+
+evolucion_movil(u_diarios_a, media_movil(u_diarios_a, 3), 'Ingresos en UCI (acumulado)', 'Ingresos en UCI', '#F98400')
+
+```
+
+## Agradecimientos
+
+Los colores empleados en las gráficas proceden del paquete ```wesanderson```.
