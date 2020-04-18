@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 17 de abril de 2020"
+date: "Actualizado el 18 de abril de 2020"
 output: html_document
 ---
 
