@@ -2,7 +2,11 @@
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
 date: "Actualizado el 19 de abril de 2020"
-output: html_document
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
@@ -13,13 +17,12 @@ library(ggplot2)
 ```
 
 
-
-## Introducción
+# Introducción
 
 El objetivo de esta notebook es visualizar los datos disponibles de la incidencia del COVID-19 en la provincia de Granada. Cabe destacar que por este motivo no se pretende realizar un análisis de los mismos sino ofrecer gráficos complementarios a los disponibles en el informe diario oficial a modo de fotografía de la situación actual.
 
 
-## Metodología
+# Metodología
 
 Los materiales empleados proceden de la [Junta de Andalucía](https://www.juntadeandalucia.es/organismos/saludyfamilias/areas/salud-vida/paginas/Nuevo_Coronavirus.html), los cuales son actualizados a diario. A excepción de los casos nuevos, el resto de variables (fallecimientos, curados, hospitalizados e ingresos en UCI) aparecen recogidos como valores acumulados, por lo que estos casos han requerido ser disgregados. No obstante, en los valores obtenidos de curados y hospitalizados diarios exite un día que dicha diferencia de acumulados da como resultado un valor negativo.
 
@@ -99,7 +102,9 @@ evolucion_movil <- function(datos1, datos2, titulo, serie, color){
 ```
 
 
-## Visualización
+# Visualización
+
+## Distribución de casos por edad y sexo
 
 ```{r, out.width = '100%', warning = FALSE}
 ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fill = Sexo)) + 
@@ -116,7 +121,7 @@ ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fi
           legend.position = 'bottom')
 ```
 
-### Evolución diaria
+## Evolución diaria
 
 ```{r, out.width = '100%', warning = FALSE}
 
@@ -164,7 +169,7 @@ evolucion_movil(u_diarios, media_movil(u_diarios, 3), 'Ingresos en UCI (diario)'
 ```
 
 
-### Evolución acumulada
+## Evolución acumulada
 
 
 ```{r, out.width = '100%', warning = FALSE}
@@ -213,7 +218,7 @@ evolucion_movil(u_diarios_a, media_movil(u_diarios_a, 3), 'Ingresos en UCI (acum
 ```
 
 
-### Ratios de crecimiento
+## Ratios de crecimiento
 
 
 ```{r, out.width = '100%', warning = FALSE}
@@ -262,6 +267,6 @@ evolucion(u_diarios_r, 'Ingresos en UCI (ratio de crecimiento)', '#F98400')
 ```
 
 
-## Agradecimientos
+# Agradecimientos
 
 Los colores empleados en las gráficas proceden del paquete ```wesanderson```.
