@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 19 de abril de 2020"
+date: "Actualizado el 20 de abril de 2020"
 output:
   html_document:
     toc: true
@@ -32,12 +32,12 @@ datos <- read.csv2('datos.csv', stringsAsFactors = FALSE)
 datos$Fecha <- as.Date(datos$Fecha, format = '%d/%m/%Y')
 
 edad <- read.csv2('datos_edad.csv', stringsAsFactors = FALSE, encoding = 'UTF-8')
-edad <- edad[-which(edad$Edad == 'TOTAL' | edad$Sexo == 'Ambos sexos'),]
+#edad <- edad[-which(edad$Edad == 'TOTAL' | edad$Sexo == 'Ambos sexos'),]
 edad$Valor <- 100*edad$Valor/sum(edad$Valor)
 
 ```
 
-Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, y la ratio de crecimiento cada 4 días. Todos ellos se han realizado tomando como punto de inicio el día 13 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
+Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, y la ratio de crecimiento cada 4 días. Todos ellos se han realizado tomando como punto de inicio el día 12 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
 
 ```{r}
 
@@ -75,7 +75,7 @@ evolucion <- function(datos, titulo, color){
     geom_col(fill = color) +
     geom_text(data = datos, aes(x = Fecha, y = Valor, label = round(Valor, 2)), size = 2, vjust = 0.5, hjust = -0.2, angle = 90) +
     geom_hline(yintercept = 1, alpha = 0.7) +
-    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('12-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('11-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
     labs(title = titulo, x = '', y = '') +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1),
@@ -90,7 +90,7 @@ evolucion_movil <- function(datos1, datos2, titulo, serie, color){
     geom_text(data = datos1, aes(x = Fecha, y = Valor, label = round(Valor, 2)), size = 2, vjust = 0.5, hjust = -0.2, angle = 90) +
     scale_fill_manual('', values = color) +
     scale_color_manual('', values = 'black') +
-    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('12-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('11-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
     scale_y_continuous(expand = c(0, 0, 0.1, 0)) +
     labs(title = titulo, x = '', y = '') +
     theme_minimal() +
@@ -125,7 +125,8 @@ ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fi
 
 ```{r, out.width = '100%', warning = FALSE}
 
-d_diarios <- datos[which(datos$Medida == 'Nuevos casos'),]
+#d_diarios <- datos[which(datos$Medida == 'Nuevos casos'),]
+d_diarios <- diario(datos, 'Confirmados')
 
 evolucion_movil(d_diarios, media_movil(d_diarios, 3), 'Casos (diario)', 'Nuevos casos', '#5BBCD6')
 
