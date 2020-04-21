@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 20 de abril de 2020"
+date: "Actualizado el 21 de abril de 2020"
 output:
   html_document:
     toc: true
@@ -37,7 +37,7 @@ edad$Valor <- 100*edad$Valor/sum(edad$Valor)
 
 ```
 
-Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, y la ratio de crecimiento cada 4 días. Todos ellos se han realizado tomando como punto de inicio el día 12 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
+Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, la ratio de crecimiento cada 4 días y la de curados con el resto de medidas. Todos ellos se han realizado tomando como punto de inicio el día 12 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
 
 ```{r}
 
@@ -99,12 +99,31 @@ evolucion_movil <- function(datos1, datos2, titulo, serie, color){
           legend.position = 'bottom')
 }
 
+ratios <- function(curados, datos, serie, color){
+  aux <- curados
+  aux$Valor <- (aux$Valor - datos$Valor)/(aux$Valor + datos$Valor)
+  
+  ggplot() +
+    geom_col(data = aux, aes(x = Fecha, y = ifelse(Valor > 0, Valor, 0), fill = 'Curados')) +
+    geom_col(data = aux, aes(x = Fecha, y = ifelse(Valor < 0, Valor, 0), fill = serie)) +
+    geom_text(data = aux, aes(x = Fecha, y = Valor, label = round(Valor, 2), hjust = ifelse(Valor > 0, -0.2, 1.2)), vjust = 0.5, size = 2, angle = 90) +
+    geom_hline(yintercept = 0, alpha = 0.7) +
+    scale_fill_manual('', values =  setNames(c('#00A08A', color), c('Curados', serie))) +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('11-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    scale_y_continuous(expand = c(0.1, 0, 0.1, 0)) +
+    labs(title = paste0('Ratio Curados/',serie), x = '', y = '') +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          legend.position = 'bottom')
+}
+
 ```
 
 
 # Visualización
 
-## Distribución de casos por edad y sexo
+## Casos por edad y sexo
 
 ```{r, out.width = '100%', warning = FALSE}
 ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fill = Sexo)) + 
@@ -267,6 +286,35 @@ evolucion(u_diarios_r, 'Ingresos en UCI (ratio de crecimiento)', '#F98400')
 
 ```
 
+
+## Ratios de curados
+
+```{r, out.width = '100%', warning = FALSE}
+
+ratios(c_diarios, d_diarios, 'Casos', '#5BBCD6')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+ratios(c_diarios, f_diarios, 'Fallecidos', '#FF0000')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+ratios(c_diarios, h_diarios, 'Hospitalizados', '#F2AD00')
+
+```
+
+
+```{r, out.width = '100%', warning = FALSE}
+
+ratios(c_diarios, u_diarios, 'Ingresos en UCI', '#F98400')
+
+```
 
 # Agradecimientos
 
