@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 21 de abril de 2020"
+date: "Actualizado el 22 de abril de 2020"
 output:
   html_document:
     toc: true
@@ -19,12 +19,14 @@ library(ggplot2)
 
 # Introducción
 
-El objetivo de esta notebook es visualizar los datos disponibles de la incidencia del COVID-19 en la provincia de Granada. Cabe destacar que por este motivo no se pretende realizar un análisis de los mismos sino ofrecer gráficos complementarios a los disponibles en el informe diario oficial a modo de fotografía de la situación actual.
+El objetivo de este proyecto es realizar una visualización longitudinal del impacto del COVID-19 en la provincia de Granada. Para ello se está realizando un doble esfuerzo. Por un lado se están empleando los datos procedentes de fuentes oficiales sobre la incidencia diaria del virus en la provincia y por otro se está observando la discusión al respecto en Twitter.
+
+Cabe destacar que por este motivo no se pretende realizar un análisis de estos datos, sino que su fin pasa por ofrecer una fotografía de la situación actual desde dos perspectivas diferentes.
 
 
 # Metodología
 
-Los materiales empleados proceden de la [Junta de Andalucía](https://www.juntadeandalucia.es/organismos/saludyfamilias/areas/salud-vida/paginas/Nuevo_Coronavirus.html), los cuales son actualizados a diario. A excepción de los casos nuevos, el resto de variables (fallecimientos, curados, hospitalizados e ingresos en UCI) aparecen recogidos como valores acumulados, por lo que estos casos han requerido ser disgregados. No obstante, en los valores obtenidos de curados y hospitalizados diarios exite un día que dicha diferencia de acumulados da como resultado un valor negativo.
+Los materiales empleados para mostrar la incidencia del virus en la provincia proceden de la [Junta de Andalucía](https://www.juntadeandalucia.es/organismos/saludyfamilias/areas/salud-vida/paginas/Nuevo_Coronavirus.html), los cuales son actualizados a diario. A excepción de los casos nuevos, el resto de variables (fallecimientos, curados, hospitalizados e ingresos en UCI) aparecen recogidos como valores acumulados, por lo que estos casos han requerido ser disgregados. No obstante, en los valores obtenidos de curados y hospitalizados diarios exite un día que dicha diferencia de acumulados da como resultado un valor negativo.
 
 ```{r}
 
@@ -35,9 +37,18 @@ edad <- read.csv2('datos_edad.csv', stringsAsFactors = FALSE, encoding = 'UTF-8'
 #edad <- edad[-which(edad$Edad == 'TOTAL' | edad$Sexo == 'Ambos sexos'),]
 edad$Valor <- 100*edad$Valor/sum(edad$Valor)
 
+tuits <- read.csv2('tuits.csv', stringsAsFactors = FALSE, encoding = 'UTF-8')
+tuits$Fecha <- as.Date(tuits$Fecha, format = '%d-%m-%Y')
+
 ```
 
-Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, la ratio de crecimiento cada 4 días y la de curados con el resto de medidas. Todos ellos se han realizado tomando como punto de inicio el día 12 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han creado las funciones están incluidas a continuación. Al respecto cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
+Partiendo de las medidas antes citadas se han realizados gráficos con la evolución diaria y acumulada, incluyendo en ambos la media móvil de 3 días, la ratio de crecimiento cada 4 días y la de curados con el resto de medidas. Todos ellos se han realizado tomando como punto de inicio el día 12 de marzo, cuando se confirmaron los primeros positivos en la provincia. Tanto para la disgregación como para la visualización, elaborada mediante ```ggplot2```, se han realizado varias funciones incluidas más abajo.
+
+
+Por otra parte, también se ha estudiado la actividad en Twitter al respecto. Para ello se han recuperado los tuits que hiciesen mención de manera conjunta a Granada y la Covid-19, incluyendo también como alternativas las palabras coronavirus y Wuhan, esta última debido a las referencias iniciales al virus durante las primeras semanas antes de establecerse el nombre oficial. Esta búsqueda se ha realizado desde el 1 de enero de 2020 hasta la actualidad (dos días antes de la fecha de actualización de esta notebook), siendo el primer tuit del 21 de enero.
+
+
+Cabe destacar que tanto los datos usados como este archivo *Rmd* se encuentran disponibles en [GitHub](https://github.com/Wences91/granada_covid-19).
 
 ```{r}
 
@@ -125,7 +136,7 @@ ratios <- function(curados, datos, serie, color){
 
 ## Casos por edad y sexo
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fill = Sexo)) + 
   geom_bar(stat = "identity") +
   geom_text(data = edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), label = paste(round(Valor, 2), '%'), vjust = 0.5, hjust = ifelse(Sexo == 'Hombres', 1.2, -0.2)), size = 3) +
@@ -142,7 +153,7 @@ ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fi
 
 ## Evolución diaria
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 #d_diarios <- datos[which(datos$Medida == 'Nuevos casos'),]
 d_diarios <- diario(datos, 'Confirmados')
@@ -152,7 +163,7 @@ evolucion_movil(d_diarios, media_movil(d_diarios, 3), 'Casos (diario)', 'Nuevos 
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 f_diarios <- diario(datos, 'Fallecimientos')
 
@@ -162,7 +173,7 @@ evolucion_movil(f_diarios, media_movil(f_diarios, 3), 'Fallecidos (diario)', 'Fa
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 c_diarios <- diario(datos, 'Curados')
 
@@ -171,7 +182,7 @@ evolucion_movil(c_diarios, media_movil(c_diarios, 3), 'Curados (diario)', 'Curad
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 h_diarios <- diario(datos, 'Hospitalizados')
 
@@ -180,7 +191,7 @@ evolucion_movil(h_diarios, media_movil(h_diarios, 3), 'Hospitalizados (diario)',
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 u_diarios <- diario(datos, 'Total UCI')
 
@@ -192,7 +203,7 @@ evolucion_movil(u_diarios, media_movil(u_diarios, 3), 'Ingresos en UCI (diario)'
 ## Evolución acumulada
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 d_diarios_a <- datos[which(datos$Medida == 'Confirmados'),]
 
@@ -201,7 +212,7 @@ evolucion_movil(d_diarios_a, media_movil(d_diarios_a, 3), 'Casos confirmados (ac
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 f_diarios_a <- datos[which(datos$Medida == 'Fallecimientos'),]
 
@@ -211,7 +222,7 @@ evolucion_movil(f_diarios_a, media_movil(f_diarios_a, 3), 'Fallecidos (acumulado
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 c_diarios_a <- datos[which(datos$Medida == 'Curados'),]
 
@@ -220,7 +231,7 @@ evolucion_movil(c_diarios_a, media_movil(c_diarios_a, 3), 'Curados (acumulado)',
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 h_diarios_a <- datos[which(datos$Medida == 'Hospitalizados'),]
 
@@ -229,7 +240,7 @@ evolucion_movil(h_diarios_a, media_movil(h_diarios_a, 3), 'Hospitalizados (acumu
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 u_diarios_a <- datos[which(datos$Medida == 'Total UCI'),]
 
@@ -241,7 +252,7 @@ evolucion_movil(u_diarios_a, media_movil(u_diarios_a, 3), 'Ingresos en UCI (acum
 ## Ratios de crecimiento
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 d_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Confirmados'),], 4)
 
@@ -250,7 +261,7 @@ evolucion(d_diarios_r, 'Casos confirmados (ratio de crecimiento)', '#5BBCD6')
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 f_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Fallecimientos'),], 4)
 
@@ -260,7 +271,7 @@ evolucion(f_diarios_r, 'Fallecidos (ratio de crecimiento)', '#FF0000')
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 c_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Curados'),], 4)
 
@@ -269,7 +280,7 @@ evolucion(c_diarios_r, 'Curados (ratio de crecimiento)', '#00A08A')
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 h_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Hospitalizados'),], 4)
 
@@ -278,7 +289,7 @@ evolucion(h_diarios_r, 'Hospitalizados (ratio de crecimiento)', '#F2AD00')
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 u_diarios_r <- ratio_crec(datos[which(datos$Medida == 'Total UCI'),], 4)
 
@@ -289,32 +300,53 @@ evolucion(u_diarios_r, 'Ingresos en UCI (ratio de crecimiento)', '#F98400')
 
 ## Ratios de curados
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
-ratios(c_diarios, d_diarios, 'Casos', '#5BBCD6')
-
-```
-
-
-```{r, out.width = '100%', warning = FALSE}
-
-ratios(c_diarios, f_diarios, 'Fallecidos', '#FF0000')
+ratios(c_diarios, d_diarios, 'Nuevos casos', '#5BBCD6')
 
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
+
+ratios(c_diarios, f_diarios, 'Fallecimientos', '#FF0000')
+
+```
+
+
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 ratios(c_diarios, h_diarios, 'Hospitalizados', '#F2AD00')
 
 ```
 
 
-```{r, out.width = '100%', warning = FALSE}
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
 ratios(c_diarios, u_diarios, 'Ingresos en UCI', '#F98400')
 
 ```
+
+
+## Evolución de tuits
+
+
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
+
+ggplot(data = tuits, aes(x = Fecha, y = Tuits)) +
+  geom_area(fill = '#046C9A', alpha = 0.7) +
+  geom_line(color = '#046C9A', size = 1) +
+  #geom_text(aes(label = ifelse(Tuits > 300, Tuits, NA)), size = 2, vjust = 0.5, hjust = -0.2, angle = 90) +
+  scale_x_date(date_breaks = '7 days', date_labels = '%d-%b', limits = c(as.Date('20-01-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    scale_y_continuous(expand = c(0, 0, 0.1, 0)) +
+    labs(title = 'Tuits (diario)', x = '', y = '') +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          legend.position = 'bottom')
+
+```
+
 
 # Agradecimientos
 
