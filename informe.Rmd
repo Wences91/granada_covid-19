@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 22 de abril de 2020"
+date: "Actualizado el 23 de abril de 2020"
 output:
   html_document:
     toc: true
@@ -343,6 +343,27 @@ ggplot(data = tuits, aes(x = Fecha, y = Tuits)) +
     theme_minimal() +
     theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
           plot.title = element_text(hjust = 0.5),
+          legend.position = 'bottom')
+
+```
+
+
+```{r, out.width = '100%', dpi = 300, warning = FALSE}
+
+tuits_ts <- ts(tuits$Tuits[69:(68+(trunc((dim(tuits)[1]-68)/7)*7))], frequency = 7)
+df_decompose <- data.frame(Fecha = rep(tuits$Fecha[69:(68+(trunc((dim(tuits)[1]-68)/7)*7))],2),
+                           Variable = c(rep('Estacionalidad',length(tuits_ts)), rep('Tendencia',length(tuits_ts))),
+                           Value = c(decompose(tuits_ts)$seasonal,decompose(tuits_ts)$trend), stringsAsFactors = FALSE)
+
+ggplot(data = df_decompose, aes(x = Fecha, y = Value)) +
+  facet_grid(Variable ~ . , scales = 'free')+
+  geom_line(color = '#046C9A', size = 1) +
+  scale_x_date(date_breaks = '2 week', date_labels = '%A\n%d %b', expand = c(0,0)) +
+  labs(title = 'Estacionalidad y tendencia de los tuits', subtitle= 'Desde la semana del inicio del confinamiento', x = '', y = '') +
+    theme_bw() +
+    theme(axis.text.x = element_text(vjust=0.5, hjust=0.5),
+          plot.title = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5),
           legend.position = 'bottom')
 
 ```
