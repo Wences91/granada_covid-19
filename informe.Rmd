@@ -1,7 +1,7 @@
 ---
 title: "Evolución del COVID-19 en la provincia de Granada"
 author: "Wenceslao Arroyo Machado"
-date: "Actualizado el 23 de abril de 2020"
+date: "Actualizado el 24 de abril de 2020"
 output:
   html_document:
     toc: true
@@ -110,6 +110,28 @@ evolucion_movil <- function(datos1, datos2, titulo, serie, color){
           legend.position = 'bottom')
 }
 
+# diferencia semanal
+diferencia_semana <- function(datos, titulo){
+  
+  datos$Valor[8:(dim(datos)[1])] <- datos$Valor[8:dim(datos)[1]]-datos$Valor[1:(dim(datos)[1]-7)]
+  datos <- datos[8:(dim(datos)[1]),]
+  
+  ggplot() +
+    geom_col(data = datos, aes(x = Fecha, y = Valor, fill = ifelse(Valor >= 0, 'Aumenta', 'Decrece'))) +
+    geom_text(data = datos, aes(x = Fecha, y = Valor, label = Valor, hjust = ifelse(Valor > 0, -0.2, 1.2)), vjust = 0.5, size = 2, angle = 90) +
+    geom_hline(yintercept = 0, alpha = 0.7) +
+    scale_fill_manual('', values =  c('Aumenta'='#FD6467', 'Decrece'='#7294D4')) +
+    scale_x_date(date_breaks = '2 days', date_labels = '%d-%b', limits = c(as.Date('11-03-2020', format = '%d-%m-%Y'), NA), expand = c(0,0)) +
+    scale_y_continuous(expand = c(0.1, 0, 0.1, 0)) +
+    labs(title = titulo, subtitle = 'Diferencia respecto al mismo día de la semana anterior', x = '', y = '') +
+    theme_minimal() +
+    theme(axis.text.x = element_text(angle = 90, vjust=0.5, hjust=1),
+          plot.title = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5),
+          legend.position = 'bottom')
+}
+
+# ratios de curados
 ratios <- function(curados, datos, serie, color){
   aux <- curados
   aux$Valor <- (aux$Valor - datos$Valor)/(aux$Valor + datos$Valor)
@@ -151,7 +173,7 @@ ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fi
           legend.position = 'bottom')
 ```
 
-## Evolución diaria
+## Evolución diaria y diferencia semanal
 
 ```{r, out.width = '100%', dpi = 300, warning = FALSE}
 
@@ -159,6 +181,7 @@ ggplot(data=edad, aes(x = Edad, y = ifelse(Sexo == 'Hombres', -Valor, Valor), fi
 d_diarios <- diario(datos, 'Confirmados')
 
 evolucion_movil(d_diarios, media_movil(d_diarios, 3), 'Casos (diario)', 'Nuevos casos', '#5BBCD6')
+diferencia_semana(d_diarios, 'Casos (diario)')
 
 ```
 
@@ -168,6 +191,7 @@ evolucion_movil(d_diarios, media_movil(d_diarios, 3), 'Casos (diario)', 'Nuevos 
 f_diarios <- diario(datos, 'Fallecimientos')
 
 evolucion_movil(f_diarios, media_movil(f_diarios, 3), 'Fallecidos (diario)', 'Fallecimientos', '#FF0000')
+diferencia_semana(f_diarios, 'Fallecidos (diario)')
 
 
 ```
@@ -178,6 +202,7 @@ evolucion_movil(f_diarios, media_movil(f_diarios, 3), 'Fallecidos (diario)', 'Fa
 c_diarios <- diario(datos, 'Curados')
 
 evolucion_movil(c_diarios, media_movil(c_diarios, 3), 'Curados (diario)', 'Curados', '#00A08A')
+diferencia_semana(c_diarios, 'Curados (diario)')
 
 ```
 
@@ -187,6 +212,7 @@ evolucion_movil(c_diarios, media_movil(c_diarios, 3), 'Curados (diario)', 'Curad
 h_diarios <- diario(datos, 'Hospitalizados')
 
 evolucion_movil(h_diarios, media_movil(h_diarios, 3), 'Hospitalizados (diario)', 'Hospitalizados', '#F2AD00')
+diferencia_semana(h_diarios, 'Hospitalizados (diario)')
 
 ```
 
@@ -196,6 +222,7 @@ evolucion_movil(h_diarios, media_movil(h_diarios, 3), 'Hospitalizados (diario)',
 u_diarios <- diario(datos, 'Total UCI')
 
 evolucion_movil(u_diarios, media_movil(u_diarios, 3), 'Ingresos en UCI (diario)', 'Ingresos en UCI', '#F98400')
+diferencia_semana(u_diarios, 'Ingresos en UCI (diario)')
 
 ```
 
